@@ -4,10 +4,11 @@ end
 
 require 'twitter'
 
-module Talon
+module Talon  
   def twitter_color_to_shoes_color(twitter_color)
     "##{twitter_color}"
   end
+  
   def logo
     background '#fff'
     background 'talon.jpg', :bottom => 0, :right => -20
@@ -39,7 +40,7 @@ module Talon
   end
   
   def show_logged_in_timeline
-    @loggedin_ui, @logged_in_status = show_user @logged_in_as.screen_name
+    @logged_in_ui, @logged_in_status = show_user @logged_in_as.screen_name, true
     @logged_in_timeline = stack do
                             stack :margin => '10px' do
                               background twitter_color_to_shoes_color(@logged_in_as.profile_sidebar_fill_color), :curve => 12
@@ -51,13 +52,18 @@ module Talon
                           end
   end
   
-  def show_user user_name
+  def show_user user_name, is_logged_in_user = false
     the_user = @twitter.user(user_name)
     user_ui = stack :margin => '10px' do
                 background twitter_color_to_shoes_color(the_user.profile_background_color), :curve => 12
                 flow do
                   stack :width => '120px', :margin => '10px' do
                     image the_user.profile_image_url, :width => '100px', :height => '100px'
+                    if is_logged_in_user
+                      button "Logout", :width => '100px' do
+                        do_logout
+                      end
+                    end
                   end
                   stack :width => '-120px' do
                     banner the_user.screen_name, :stroke => twitter_color_to_shoes_color(the_user.profile_text_color)
@@ -88,17 +94,42 @@ module Talon
     user = @user.text
     pass = @pass.text
     @twitter = Twitter::Base.new(user, pass)
-    if @twitter.verify_credentials
+    begin
+      @twitter.verify_credentials
       @login.hide
       @logged_in_as = @twitter.user(user)
       show_logged_in_timeline
-    else
-      alert "I don't think so :("
+    rescue Twitter::CantConnect
+      incorrect_login
     end
+  end
+  
+  def incorrect_login
+    if @incorrect_login_anim.nil?
+      @incorrect_login_anim = animate do |i|
+                                @login.displace((Math.sin(i) * 6).to_i, 0)
+                              end
+    end
+    @incorrect_login_anim.start
+    timer(2) do
+      @incorrect_login_anim.stop
+      @login.displace(0,0)
+    end
+  end
+  
+  def do_logout
+    @login.show
+    @user.text = ''
+    @pass.text = ''
+    @logged_in_ui.remove
+    @logged_in_status.remove
+    @logged_in_timeline.remove
+    @twitter = nil
+    @logged_in_as = nil
   end
 end
 
-Shoes.app do
+Shoes.app :title => 'Talon' do
   extend Talon
   logo
   login
