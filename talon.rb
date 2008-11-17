@@ -19,7 +19,7 @@ module Talon
   end
   
   def login
-    @login = stack :margin => ['10%', '10px', '10%', '0px'] do
+    @login = stack :margin => ['10%', '15%', '10%', '0px'] do
                background '#df9', :curve => 12
                title "Who goes there?", :stroke => '#691FFF', :align => 'center'
                flow do
