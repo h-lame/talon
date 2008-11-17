@@ -23,16 +23,16 @@ module Talon
                background '#df9', :curve => 12
                title "Who goes there?", :stroke => '#691FFF', :align => 'center'
                flow do
-                 stack :width => '100px' do
+                 stack :width => '150px' do
                    para 'Nom de tweet', :stroke => '#691FFF'
                  end
-                 @user = edit_line :width => '-120px'
+                 @user = edit_line :width => '-170px'
                end
                flow do
-                 stack :width => '100px' do
+                 stack :width => '150px' do
                    para 'Sekrit', :stroke => '#691FFF'
                  end
-                 @pass = edit_line :width => '-120px', :secret => true
+                 @pass = edit_line :width => '-170px', :secret => true
                end
                button 'That is who I am!', :width => '100%', :stroke => '#691FFF' do
                  do_login
