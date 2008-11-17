@@ -5,7 +5,7 @@ end
 require 'twitter'
 
 module Talon  
-  def twitter_color_to_shoes_color(twitter_color)
+  def twitter_color_to_shoes_color
     "##{twitter_color}"
   end
   
@@ -17,6 +17,7 @@ module Talon
       title 'Talon', :stroke => '#691FFF', :align => 'center'
     end
   end
+  
   def login
     @login = stack :margin => '60px' do
                background '#df9', :curve => 12
@@ -39,26 +40,34 @@ module Talon
              end
   end
   
+  def cached_user_lookup(screen_name)
+    @user_cache ||= {}
+    if @user_cache.has_key? screen_name
+      @user_cache[screen_name]
+    else
+      @user_cache[screen_name] = @twitter.user(screen_name)
+    end
+  end
+  
   def show_logged_in_timeline
-    @logged_in_ui, @logged_in_status = show_user @logged_in_as.screen_name, true
+    @logged_in_ui, @logged_in_status = show_user @logged_in_as, true
     @logged_in_timeline = stack do
                             stack :margin => '10px' do
                               background twitter_color_to_shoes_color(@logged_in_as.profile_sidebar_fill_color), :curve => 12
                               caption 'Timeline', :stroke => twitter_color_to_shoes_color(@logged_in_as.profile_text_color)
                             end
                             @twitter.timeline.each do |status|
-                              show_status @twitter.user(status.user), status
+                              show_status cached_user_lookup(status.user.screen_name), status
                             end
                           end
   end
   
-  def show_user user_name, is_logged_in_user = false
-    the_user = @twitter.user(user_name)
+  def show_user twitter_user, is_logged_in_user = false
     user_ui = stack :margin => '10px' do
-                background twitter_color_to_shoes_color(the_user.profile_background_color), :curve => 12
+                background twitter_color_to_shoes_color(twitter_user.profile_sidebar_fill_color), :curve => 12
                 flow do
                   stack :width => '120px', :margin => '10px' do
-                    image the_user.profile_image_url, :width => '100px', :height => '100px'
+                    image twitter_user.profile_image_url, :width => '100px', :height => '100px'
                     if is_logged_in_user
                       button "Logout", :width => '100px' do
                         do_logout
@@ -66,18 +75,18 @@ module Talon
                     end
                   end
                   stack :width => '-120px' do
-                    banner the_user.screen_name, :stroke => twitter_color_to_shoes_color(the_user.profile_text_color)
-                    subtitle "(#{the_user.name})", :stroke => twitter_color_to_shoes_color(the_user.profile_text_color)
+                    banner twitter_user.screen_name, :stroke => twitter_color_to_shoes_color(twitter_user.profile_text_color)
+                    subtitle "(#{twitter_user.name})", :stroke => twitter_color_to_shoes_color(twitter_user.profile_text_color)
                   end
                 end
               end
-    current_status = show_status the_user, the_user.status
+    current_status = show_status twitter_user, twitter_user.status
     [user_ui, current_status]
   end
   
   def show_status for_user, status_info
     stack :margin => '10px' do
-      background twitter_color_to_shoes_color(for_user.profile_background_color), :curve => 12
+      background twitter_color_to_shoes_color(for_user.profile_sidebar_fill_color), :curve => 12
       flow do
         stack :width => '60px', :margin => '10px' do
           image for_user.profile_image_url, :width => '50px', :height => '50px'
@@ -97,7 +106,7 @@ module Talon
     begin
       @twitter.verify_credentials
       @login.hide
-      @logged_in_as = @twitter.user(user)
+      @logged_in_as = cached_user_lookup user
       show_logged_in_timeline
     rescue Twitter::CantConnect
       incorrect_login
@@ -124,6 +133,7 @@ module Talon
     @logged_in_ui.remove
     @logged_in_status.remove
     @logged_in_timeline.remove
+    @user_cache = nil
     @twitter = nil
     @logged_in_as = nil
   end
