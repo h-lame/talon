@@ -5,8 +5,8 @@ end
 require 'twitter'
 
 module Talon  
-  def twitter_color_to_shoes_color
-    "##{twitter_color}"
+  def twitter_colour_to_shoes_colour(twitter_colour)
+    "##{twitter_colour}"
   end
   
   def logo
@@ -19,7 +19,7 @@ module Talon
   end
   
   def login
-    @login = stack :margin => '60px' do
+    @login = stack :margin => ['10%', '10px', '10%', '0px'] do
                background '#df9', :curve => 12
                title "Who goes there?", :stroke => '#691FFF', :align => 'center'
                flow do
@@ -52,9 +52,9 @@ module Talon
   def show_logged_in_timeline
     @logged_in_ui, @logged_in_status = show_user @logged_in_as, true
     @logged_in_timeline = stack do
-                            stack :margin => '10px' do
-                              background twitter_color_to_shoes_color(@logged_in_as.profile_sidebar_fill_color), :curve => 12
-                              caption 'Timeline', :stroke => twitter_color_to_shoes_color(@logged_in_as.profile_text_color)
+                            stack :margin => ['10px', '0px', '10px', '0px'] do
+                              background twitter_colour_to_shoes_colour(@logged_in_as.profile_sidebar_fill_color), :curve => 12
+                              caption 'Timeline', :stroke => twitter_colour_to_shoes_colour(@logged_in_as.profile_text_color), :align => 'center'
                             end
                             @twitter.timeline.each do |status|
                               show_status cached_user_lookup(status.user.screen_name), status
@@ -63,8 +63,8 @@ module Talon
   end
   
   def show_user twitter_user, is_logged_in_user = false
-    user_ui = stack :margin => '10px' do
-                background twitter_color_to_shoes_color(twitter_user.profile_sidebar_fill_color), :curve => 12
+    user_ui = stack :margin => ['10px', '0px', '10px', '0px'] do
+                background twitter_colour_to_shoes_colour(twitter_user.profile_sidebar_fill_color), :curve => 12
                 flow do
                   stack :width => '120px', :margin => '10px' do
                     image twitter_user.profile_image_url, :width => '100px', :height => '100px'
@@ -75,8 +75,8 @@ module Talon
                     end
                   end
                   stack :width => '-120px' do
-                    banner twitter_user.screen_name, :stroke => twitter_color_to_shoes_color(twitter_user.profile_text_color)
-                    subtitle "(#{twitter_user.name})", :stroke => twitter_color_to_shoes_color(twitter_user.profile_text_color)
+                    banner twitter_user.screen_name, :stroke => twitter_colour_to_shoes_colour(twitter_user.profile_text_color)
+                    subtitle "(#{twitter_user.name})", :stroke => twitter_colour_to_shoes_colour(twitter_user.profile_text_color)
                   end
                 end
               end
@@ -86,14 +86,14 @@ module Talon
   
   def show_status for_user, status_info
     stack :margin => '10px' do
-      background twitter_color_to_shoes_color(for_user.profile_sidebar_fill_color), :curve => 12
+      background twitter_colour_to_shoes_colour(for_user.profile_sidebar_fill_color), :curve => 12
       flow do
         stack :width => '60px', :margin => '10px' do
           image for_user.profile_image_url, :width => '50px', :height => '50px'
         end
         stack :width => '-60px' do
-          caption "@#{for_user.screen_name}", :stroke => twitter_color_to_shoes_color(for_user.profile_text_color)
-          para status_info.text, :stroke => twitter_color_to_shoes_color(for_user.profile_text_color)
+          caption "@#{for_user.screen_name}", :stroke => twitter_colour_to_shoes_colour(for_user.profile_text_color)
+          para status_info.text, :stroke => twitter_colour_to_shoes_colour(for_user.profile_text_color)
         end
       end
     end   
