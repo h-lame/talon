@@ -4,9 +4,23 @@ end
 
 require 'twitter'
 
+Twitter::Base.class_eval do
+  def end_session
+    request('account/end_session.xml', :auth => true)
+  end
+end
+
 module Talon  
   def twitter_colour_to_shoes_colour(twitter_colour)
     "##{twitter_colour}"
+  end
+  
+  def safe_profile_image_url(image_url)
+    if image_url.blank? 
+      'default_profile_bigger.png'
+    else
+      image_url
+    end
   end
   
   def logo
@@ -67,7 +81,7 @@ module Talon
                 background twitter_colour_to_shoes_colour(twitter_user.profile_sidebar_fill_color), :curve => 12
                 flow do
                   stack :width => '120px', :margin => '10px' do
-                    image twitter_user.profile_image_url, :width => '100px', :height => '100px'
+                    image safe_profile_image_url(twitter_user.profile_image_url), :width => '100px', :height => '100px'
                     if is_logged_in_user
                       button "Logout", :width => '100px' do
                         do_logout
@@ -85,30 +99,33 @@ module Talon
   end
   
   def show_status for_user, status_info
-    stack :margin => '10px' do
-      background twitter_colour_to_shoes_colour(for_user.profile_sidebar_fill_color), :curve => 12
-      flow do
-        stack :width => '60px', :margin => '10px' do
-          image for_user.profile_image_url, :width => '50px', :height => '50px'
-        end
-        stack :width => '-60px' do
-          caption "@#{for_user.screen_name}", :stroke => twitter_colour_to_shoes_colour(for_user.profile_text_color)
-          para status_info.text, :stroke => twitter_colour_to_shoes_colour(for_user.profile_text_color)
+    unless status_info.nil?
+      stack :margin => '10px' do
+        background twitter_colour_to_shoes_colour(for_user.profile_sidebar_fill_color), :curve => 12
+        flow do
+          stack :width => '60px', :margin => '10px' do
+            image safe_profile_image_url(for_user.profile_image_url), :width => '50px', :height => '50px'
+          end
+          stack :width => '-60px' do
+            caption "@#{for_user.screen_name}", :stroke => twitter_colour_to_shoes_colour(for_user.profile_text_color)
+            para status_info.text, :stroke => twitter_colour_to_shoes_colour(for_user.profile_text_color)
+          end
         end
       end
-    end   
+    end
   end
   
   def do_login
     user = @user.text
     pass = @pass.text
-    @twitter = Twitter::Base.new(user, pass)
+    # TODO - uncomment if you're using trikker locally to pretend to be twitter
+    @twitter = Twitter::Base.new(user, pass) #, :api_host => '127.0.0.1')
     begin
       @twitter.verify_credentials
       @login.hide
       @logged_in_as = cached_user_lookup user
       show_logged_in_timeline
-    rescue Twitter::CantConnect
+    rescue Twitter::CantConnect => e
       incorrect_login
     end
   end
@@ -130,11 +147,15 @@ module Talon
     @login.show
     @user.text = ''
     @pass.text = ''
-    @logged_in_ui.remove
-    @logged_in_status.remove
-    @logged_in_timeline.remove
+    @logged_in_ui.remove unless @logged_in_ui.nil?
+    @logged_in_status.remove unless @logged_in_status.nil?
+    @logged_in_timeline.remove unless @logged_in_timeline.nil?
     @user_cache = nil
-    @twitter = nil
+    begin
+      @twitter.end_session
+    ensure
+      @twitter = nil
+    end
     @logged_in_as = nil
   end
 end
